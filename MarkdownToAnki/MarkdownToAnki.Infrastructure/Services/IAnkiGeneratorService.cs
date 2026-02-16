@@ -2,5 +2,5 @@ namespace MarkdownToAnki.Infrastructure.Services;
 
 public interface IAnkiGeneratorService
 {
-    void GenerateApkg(IMarkdownParserService markdownParser, string outputPath);
+    Task GenerateApkg(IMarkdownParserService markdownParser, string outputPath);
 }

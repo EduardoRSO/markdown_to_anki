@@ -1,22 +1,55 @@
 ﻿using System.Runtime.InteropServices;
 using MarkdownToAnki.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 class Program
 {
-    static void Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
-        Console.WriteLine($"--> Command line arguments received:\n{args}");
-        if(args.Length == 0)
+        using IHost host = Host.CreateDefaultBuilder(args)
+            .ConfigureServices((_, services) =>
+            {
+                services.AddSingleton<IMarkdownParserService, MarkdownParserService>();
+                services.AddSingleton<IAnkiGeneratorService, AnkiGeneratorService>();
+            })
+            .Build();
+
+        var logger = host.Services.GetRequiredService<ILogger<Program>>();
+
+        if (args.Length == 0)
         {
-            Console.WriteLine("--> InputPath is required and OutputPath is optional");
-            Environment.Exit(0);
+            logger.LogInformation("Usage: md2anki <input.md> [output.apkg]");
+            return 1;
         }
-        string filePath = args[0];
-        string outputPath = args.Length == 2 ? args[1] : Path.Join(Directory.GetCurrentDirectory(),$"ankiDeck_{DateTime.Now}");
-        IMarkdownParserService parser = new MarkdownParserService();
-        IAnkiGeneratorService generator = new AnkiGeneratorService();
-        generator.GenerateApkg(parser, outputPath);
-        Console.WriteLine($"--> Deck generated at: {outputPath}");
+
+        string input = args[0];
+        if (!File.Exists(input))
+        {
+            logger.LogError("Input file not found: {Path}", input);
+            return 2;
+        }
+
+        string output = args.Length > 1
+            ? args[1]
+            : Path.Combine(Directory.GetCurrentDirectory(), $"ankiDeck_{DateTime.Now:yyyyMMddHHmmss}.apkg");
+
+        try
+        {
+            var parser = host.Services.GetRequiredService<IMarkdownParserService>();
+            var generator = host.Services.GetRequiredService<IAnkiGeneratorService>();
+
+            await generator.GenerateApkg(parser, output);
+            logger.LogInformation("Deck generated at {Path}", output);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to generate deck");
+            return 3;
+        }
+
+        return 0;
     }
 }
 

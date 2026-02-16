@@ -4,6 +4,6 @@ namespace MarkdownToAnki.Infrastructure.Services;
 
 public interface IMarkdownParserService
 {
-    (DeckDefinition, List<FlashCardNote>) ParseFile(string filePath);
+    Task<(DeckDefinition, List<FlashCardNote>)> ParseFileAsync(string filePath);
 }
 
