@@ -40,7 +40,7 @@ class Program
             var parser = host.Services.GetRequiredService<IMarkdownParserService>();
             var generator = host.Services.GetRequiredService<IAnkiGeneratorService>();
 
-            await generator.GenerateApkg(parser, output);
+            await generator.GenerateApkg(parser, input, output);
             logger.LogInformation("Deck generated at {Path}", output);
         }
         catch (Exception ex)
