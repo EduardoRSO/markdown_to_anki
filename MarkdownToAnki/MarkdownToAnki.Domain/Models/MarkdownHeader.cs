@@ -11,6 +11,7 @@ public class TemplateDefinition
 {
     public string Name {get; set;}
     public List<string> Fields {get; set;} = new();
+    public string HtmlFormat {get; set;}
     public string Usage {get; set;}
 }
 
