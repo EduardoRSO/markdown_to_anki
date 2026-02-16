@@ -1,9 +1,46 @@
+using AnkiNet;
+using MarkdownToAnki.Domain.Models;
+
 namespace MarkdownToAnki.Infrastructure.Services;
 
 public class AnkiGeneratorService : IAnkiGeneratorService
 {
-    Task IAnkiGeneratorService.GenerateApkg(IMarkdownParserService markdownParser, string outputPath)
+    async Task IAnkiGeneratorService.GenerateApkg(IMarkdownParserService markdownParser, string inputPath, string outputPath)
     {
-        throw new NotImplementedException();
+        var (deckDefinition, flashCardNotes) = await markdownParser.ParseFileAsync(inputPath);
+
+        List<AnkiNoteType> ankiNotes = new();
+        for (int i = 0; i < deckDefinition.Templates.Count; i++)
+        {
+            var currentTemplate = deckDefinition.Templates[i];
+            var cardType = new AnkiCardType(
+                $"{currentTemplate.Name} card",
+                0,
+                currentTemplate.HtmlQuestionFormat,
+                currentTemplate.HtmlAnswerFormat
+            );
+            var noteType = new AnkiNoteType(
+                $"{currentTemplate.Name} template",
+                [cardType],
+                [.. currentTemplate.Fields],
+                currentTemplate.CssFormat
+            );
+            ankiNotes.Add(noteType);
+        }
+        var ankiCollection = new AnkiCollection();
+        var deckId = ankiCollection.CreateDeck(deckDefinition.DeckName);
+        var noteIdMap = ankiNotes.ToDictionary(
+            p => p.Name, p=> ankiCollection.CreateNoteType(p)
+        );
+        for (int c = 0; c < flashCardNotes.Count; c++)
+        {
+            var currentCard = flashCardNotes[c];
+            ankiCollection.CreateNote(
+                deckId,
+                noteIdMap[currentCard.Template.Name],
+                currentCard.FieldValues.Values.ToArray()
+            );
+        }
+        await AnkiFileWriter.WriteToFileAsync($"{deckDefinition.DeckName}_{DateTime.Now:yyyyMMddHHmmss}.apkg", ankiCollection);
     }
 }
