@@ -45,7 +45,7 @@ class Program
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate deck");
+            logger.LogError(ex, ex.StackTrace, ex.Data, "Failed to generate deck");
             return 3;
         }
 
