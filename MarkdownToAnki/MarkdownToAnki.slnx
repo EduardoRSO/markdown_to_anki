@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MarkdownToAnki.ConsoleApp/MarkdownToAnki.ConsoleApp.csproj" />
+  <Project Path="MarkdownToAnki.Domain/MarkdownToAnki.Domain.csproj" />
+  <Project Path="MarkdownToAnki.Infrastructure/MarkdownToAnki.Infrastructure.csproj" />
+</Solution>
