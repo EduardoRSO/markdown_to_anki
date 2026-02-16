@@ -11,12 +11,20 @@ public class MarkdownParserService : IMarkdownParserService
         var content = await File.ReadAllTextAsync(filePath);
         
         // Split YAML front-matter from markdown body
-        var parts = content.Split(new[] { "---" }, StringSplitOptions.None);
-        if (parts.Length < 3)
-            throw new InvalidOperationException("File must contain YAML front-matter enclosed by ---");
+        // Find the first occurrence of "---" at the start of a line
+        var firstDelimiter = content.IndexOf("---");
+        if (firstDelimiter == -1)
+            throw new InvalidOperationException("File must start with ---");
         
-        var yamlContent = parts[1];
-        var markdownBody = string.Join("---", parts.Skip(2));
+        // Find the second "---" that appears at the start of a line (after a newline)
+        var searchStartIndex = firstDelimiter + 3;
+        var secondDelimiter = content.IndexOf("\n---", searchStartIndex);
+        if (secondDelimiter == -1)
+            throw new InvalidOperationException("File must contain closing --- for YAML front-matter");
+        
+        // Extract YAML content between the two delimiters
+        var yamlContent = content.Substring(firstDelimiter + 3, secondDelimiter - firstDelimiter - 3).Trim();
+        var markdownBody = content.Substring(secondDelimiter + 5).Trim(); // +5 to skip "\n---"
         
         // Parse YAML
         var yaml = new YamlStream();
@@ -160,6 +168,7 @@ public class MarkdownParserService : IMarkdownParserService
             // Split content by separator
             var values = content.Split(new[] { deckDefinition.Separator }, StringSplitOptions.None)
                 .Select(v => v.Trim())
+                .Select(v => v.Replace("\n", "<br>"))  // Convert newlines to HTML line breaks
                 .ToList();
             
             // Map values to fields
