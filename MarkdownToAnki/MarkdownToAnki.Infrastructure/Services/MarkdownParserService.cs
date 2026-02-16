@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using System.Globalization;
+using System.Text;
 using MarkdownToAnki.Domain.Models;
 using YamlDotNet.RepresentationModel;
 
@@ -127,66 +129,121 @@ public class MarkdownParserService : IMarkdownParserService
         var flashCards = new List<FlashCardNote>();
         var templateMap = deckDefinition.Templates.ToDictionary(t => t.Name);
         
-        // Find all code blocks: ```TemplateName\n...\n```
-        var codeBlockPattern = @"```([A-Za-z0-9_]+)\s*\n(.*?)\n```";
-        var matches = Regex.Matches(markdownBody, codeBlockPattern, RegexOptions.Singleline);
-        
-        // Extract current headers for tags
-        var currentTags = new List<string>();
         var headerPattern = @"^(#{1,6})\s+(.+)$";
+        var codeBlockStartPattern = @"^```([A-Za-z0-9_]+)\s*$";
         
         var lines = markdownBody.Split('\n');
-        int blockIndex = 0;
+        var currentHeadersByLevel = new Dictionary<int, string>();
+        var currentCodeBlock = new List<string>();
+        string currentTemplate = null;
         
-        foreach (var line in lines)
+        for (int i = 0; i < lines.Length; i++)
         {
+            var line = lines[i];
+            
+            // Check if this is a header
             var headerMatch = Regex.Match(line, headerPattern);
             if (headerMatch.Success)
             {
                 int level = headerMatch.Groups[1].Value.Length;
                 string headerText = headerMatch.Groups[2].Value;
                 
-                // Keep only headers of higher level (trim deeper ones)
-                // while (currentTags.Count >= level)
-                //     currentTags.RemoveAt(currentTags.Count - 1);
+                // Remove headers deeper than or equal to current level
+                var keysToRemove = currentHeadersByLevel.Keys.Where(k => k >= level).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    currentHeadersByLevel.Remove(key);
+                }
                 
-                currentTags.Add(headerText);
-            }
-        }
-        
-        foreach (Match match in matches)
-        {
-            string templateName = match.Groups[1].Value;
-            string content = match.Groups[2].Value;
-            
-            if (!templateMap.ContainsKey(templateName))
+                // Add this header
+                currentHeadersByLevel[level] = headerText;
                 continue;
-            
-            var template = templateMap[templateName];
-            var fieldValues = new Dictionary<string, string>();
-            
-            // Split content by separator
-            var values = content.Split(new[] { deckDefinition.Separator }, StringSplitOptions.None)
-                .Select(v => v.Trim())
-                .Select(v => v.Replace("\n", "<br>"))  // Convert newlines to HTML line breaks
-                .ToList();
-            
-            // Map values to fields
-            for (int i = 0; i < template.Fields.Count && i < values.Count; i++)
-            {
-                fieldValues[template.Fields[i]] = values[i];
             }
             
-            var note = new FlashCardNote
+            // Check if this is a code block start
+            var blockStartMatch = Regex.Match(line, codeBlockStartPattern);
+            if (blockStartMatch.Success && currentTemplate == null)
             {
-                Template = template,
-                FieldValues = fieldValues,
-                Tags = new List<string>(currentTags)
-            };
+                currentTemplate = blockStartMatch.Groups[1].Value;
+                currentCodeBlock.Clear();
+                continue;
+            }
             
-            flashCards.Add(note);
+            // Check if this is a code block end
+            if (line.TrimStart().StartsWith("```") && currentTemplate != null)
+            {
+                // Process the code block
+                if (templateMap.ContainsKey(currentTemplate))
+                {
+                    var template = templateMap[currentTemplate];
+                    var fieldValues = new Dictionary<string, string>();
+                    var content = string.Join("\n", currentCodeBlock);
+                    
+                    // Split content by separator
+                    var values = content.Split(new[] { deckDefinition.Separator }, StringSplitOptions.None)
+                        .Select(v => v.Trim())
+                        .Select(v => v.Replace("\n", "<br>"))  // Convert newlines to HTML line breaks
+                        .ToList();
+                    
+                    // Map values to fields
+                    for (int j = 0; j < template.Fields.Count && j < values.Count; j++)
+                    {
+                        fieldValues[template.Fields[j]] = values[j];
+                    }
+                    
+                    // Get tags from current header hierarchy, normalized
+                    var tags = currentHeadersByLevel
+                        .OrderBy(x => x.Key)  // Sort by level
+                        .Select(x => NormalizeTag(x.Value))
+                        .ToList();
+                    
+                    var note = new FlashCardNote
+                    {
+                        Template = template,
+                        FieldValues = fieldValues,
+                        Tags = tags
+                    };
+                    
+                    flashCards.Add(note);
+                }
+                
+                currentTemplate = null;
+                currentCodeBlock.Clear();
+                continue;
+            }
+            
+            // If we're in a code block, accumulate the content
+            if (currentTemplate != null)
+            {
+                currentCodeBlock.Add(line);
+            }
         }
         
         return flashCards;
+    }
+    
+    private string NormalizeTag(string tag)
+    {
+        // Remove accents using NFD decomposition
+        string normalized = tag.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        
+        foreach (var c in normalized)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+        
+        string result = sb.ToString();
+        
+        // Convert to lowercase and replace spaces/special chars with underscores
+        result = result.ToLower();
+        result = Regex.Replace(result, @"[^a-z0-9]+", "_");
+        result = Regex.Replace(result, @"^_+|_+$", ""); // Remove leading/trailing underscores
+        
+        return result;
     }
 }

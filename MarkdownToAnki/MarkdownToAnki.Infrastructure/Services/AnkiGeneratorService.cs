@@ -46,9 +46,18 @@ public class AnkiGeneratorService : IAnkiGeneratorService
             ankiCollection.CreateNote(
                 deckId,
                 noteIdMap[currentCard.Template.Name],
-                currentCard.FieldValues.Values.ToArray()
+                [.. currentCard.FieldValues.Values]
             );
         }
-        await AnkiFileWriter.WriteToFileAsync($"{deckDefinition.DeckName}_{DateTime.Now:yyyyMMddHHmmss}.apkg", ankiCollection);
+        
+        string outputDir = Path.GetDirectoryName(outputPath) ?? Directory.GetCurrentDirectory();
+        string fileName = Path.GetFileNameWithoutExtension(outputPath);
+        string fullOutputPath = Path.Combine(outputDir, $"{fileName}_{DateTime.Now:yyyyMMddHHmmss}.apkg");
+        
+        await AnkiFileWriter.WriteToFileAsync(fullOutputPath, ankiCollection);
+        
+        // Apply tags to the generated .apkg file
+        var tagsPerNote = flashCardNotes.Select(card => card.Tags).ToList();
+        AnkiTagService.AddTagsToApkg(fullOutputPath, tagsPerNote);
     }
 }
