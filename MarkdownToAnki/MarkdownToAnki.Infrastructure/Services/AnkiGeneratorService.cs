@@ -29,9 +29,17 @@ public class AnkiGeneratorService : IAnkiGeneratorService
         }
         var ankiCollection = new AnkiCollection();
         var deckId = ankiCollection.CreateDeck(deckDefinition.DeckName);
-        var noteIdMap = ankiNotes.ToDictionary(
-            p => p.Name, p=> ankiCollection.CreateNoteType(p)
-        );
+        
+        // Create a map from template name to note type ID
+        var noteIdMap = new Dictionary<string, long>();
+        for (int i = 0; i < deckDefinition.Templates.Count; i++)
+        {
+            var template = deckDefinition.Templates[i];
+            var ankiNote = ankiNotes[i];
+            var noteTypeId = ankiCollection.CreateNoteType(ankiNote);
+            noteIdMap[template.Name] = noteTypeId;
+        }
+        
         for (int c = 0; c < flashCardNotes.Count; c++)
         {
             var currentCard = flashCardNotes[c];
