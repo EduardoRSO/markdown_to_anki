@@ -48,11 +48,20 @@ class Program
         }
 
         bool isApkgInput = string.Equals(Path.GetExtension(input), ".apkg", StringComparison.OrdinalIgnoreCase);
-        string output = args.Length > 1
-            ? args[1]
-            : isApkgInput
-                ? Path.ChangeExtension(input, ".md")
-                : Path.Combine(Directory.GetCurrentDirectory(), $"ankiDeck_{DateTime.Now:yyyyMMddHHmmss}.apkg");
+        
+        string output;
+        if (args.Length > 1)
+        {
+            output = args[1];
+        }
+        else
+        {
+            // Default: current directory with timestamped filename
+            string baseName = Path.GetFileNameWithoutExtension(input);
+            string extension = isApkgInput ? ".md" : ".apkg";
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            output = Path.Combine(Directory.GetCurrentDirectory(), $"{baseName}_{timestamp}{extension}");
+        }
 
         try
         {
