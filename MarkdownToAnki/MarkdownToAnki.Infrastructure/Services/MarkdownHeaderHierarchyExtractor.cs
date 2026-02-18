@@ -18,13 +18,13 @@ public class MarkdownHeaderHierarchyExtractor : IMarkdownHeaderHierarchyExtracto
 
         for (int i = 0; i < lines.Length; i++)
         {
-            var line = lines[i];
+            var line = lines[i].TrimEnd();
             var headerMatch = Regex.Match(line, HeaderPattern);
 
             if (headerMatch.Success)
             {
                 int level = headerMatch.Groups[1].Value.Length;
-                string headerText = headerMatch.Groups[2].Value;
+                string headerText = headerMatch.Groups[2].Value.TrimEnd();
 
                 currentHierarchy.UpdateHeader(level, headerText);
                 yield return (i, currentHierarchy.Clone());
@@ -39,13 +39,13 @@ public class MarkdownHeaderHierarchyExtractor : IMarkdownHeaderHierarchyExtracto
 
         for (int i = 0; i < lines.Length && i <= targetLineIndex; i++)
         {
-            var line = lines[i];
+            var line = lines[i].TrimEnd();
             var headerMatch = Regex.Match(line, HeaderPattern);
 
             if (headerMatch.Success)
             {
                 int level = headerMatch.Groups[1].Value.Length;
-                string headerText = headerMatch.Groups[2].Value;
+                string headerText = headerMatch.Groups[2].Value.TrimEnd();
                 currentHierarchy.UpdateHeader(level, headerText);
             }
         }

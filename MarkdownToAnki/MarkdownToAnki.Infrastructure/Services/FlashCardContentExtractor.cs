@@ -61,7 +61,7 @@ public class FlashCardContentExtractor : IFlashCardContentExtractor
         var content = blockContent.Content;
 
         // Split content by separator
-        var values = content.Split(new[] { separator }, StringSplitOptions.None)
+        var values = content.Split([separator], StringSplitOptions.None)
             .Select(v => v.Trim())
             .Select(v => v.Replace("\n", "<br>"))  // Convert newlines to HTML line breaks
             .ToList();

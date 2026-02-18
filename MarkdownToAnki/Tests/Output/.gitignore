@@ -1,0 +1,5 @@
+# Ignore generated APKG files (they are large binary files)
+*.apkg
+
+# But keep this folder in git
+!.gitignore
