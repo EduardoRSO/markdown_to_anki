@@ -10,11 +10,13 @@ namespace MarkdownToAnki.Infrastructure.Services;
 public class DeckHierarchyBuilder : IDeckHierarchyBuilder
 {
     private readonly AnkiCollection _collection;
+    private readonly string _rootDeckName;
     private readonly Dictionary<string, long> _deckPathCache;
 
-    public DeckHierarchyBuilder(AnkiCollection collection)
+    public DeckHierarchyBuilder(AnkiCollection collection, string rootDeckName)
     {
         _collection = collection ?? throw new ArgumentNullException(nameof(collection));
+        _rootDeckName = rootDeckName ?? throw new ArgumentNullException(nameof(rootDeckName));
         _deckPathCache = new Dictionary<string, long>();
     }
 
@@ -22,18 +24,22 @@ public class DeckHierarchyBuilder : IDeckHierarchyBuilder
     {
         var hierarchyPath = headerHierarchy.GetHierarchyPath();
         
-        if (hierarchyPath.Count == 0)
+        // Build full path: rootDeckName::H1::H2::H3...
+        var fullPath = new List<string> { _rootDeckName };
+        fullPath.AddRange(hierarchyPath);
+        
+        if (fullPath.Count == 1)
             return rootDeckId;
 
-        // Create a cache key from the hierarchy path
-        string cacheKey = string.Join("::", hierarchyPath);
+        // Create a cache key from the full hierarchy path
+        string cacheKey = string.Join("::", fullPath);
         
         if (_deckPathCache.TryGetValue(cacheKey, out long cachedDeckId))
             return cachedDeckId;
 
         // Navigate/create the deck hierarchy
         long currentDeckId = rootDeckId;
-        var pathSoFar = new List<string>();
+        var pathSoFar = new List<string> { _rootDeckName };
         
         foreach (var header in hierarchyPath)
         {

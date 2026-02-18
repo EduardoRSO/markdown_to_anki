@@ -39,8 +39,8 @@ public class AnkiGeneratorService : IAnkiGeneratorService
         // Create root deck
         var rootDeckId = ankiCollection.CreateDeck(deckDefinition.DeckName);
 
-        // Initialize deck hierarchy builder for this collection
-        var hierarchyBuilder = new DeckHierarchyBuilder(ankiCollection);
+        // Initialize deck hierarchy builder for this collection with root deck name
+        var hierarchyBuilder = new DeckHierarchyBuilder(ankiCollection, deckDefinition.DeckName);
 
         // Process each flashcard note
         foreach (var cardNote in flashCardNotes)
