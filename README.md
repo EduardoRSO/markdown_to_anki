@@ -124,21 +124,58 @@ This card receives tags: `matematica_e_raciocinio_logico`, `razao_e_proporcao`
 ```
 
 MarkdownToAnki/
-├── MarkdownToAnki.ConsoleApp/       # CLI entry point
-├── MarkdownToAnki.Domain/            # Domain models
-└── MarkdownToAnki.Infrastructure/    # Core logic
+├── MarkdownToAnki.ConsoleApp/           # CLI entry point
+├── MarkdownToAnki.Domain/               # Domain models
+│   └── Models/
+│       ├── TemplateDefinition.cs        # Card template schema
+│       ├── DeckDefinition.cs            # Deck metadata
+│       ├── FlashCardNote.cs             # Individual flashcard
+│       └── HeaderHierarchy.cs           # Header hierarchy tracker
+└── MarkdownToAnki.Infrastructure/       # Core logic
     └── Services/
-        ├── MarkdownParserService.cs  # Markdown parsing
-        ├── AnkiGeneratorService.cs   # APKG generation
-        └── AnkiTagService.cs         # Tag management
+        ├── Markdown Parsing
+        │   ├── MarkdownParserService.cs (Facade)
+        │   ├── DeckConfigParser.cs
+        │   ├── MarkdownHeaderHierarchyExtractor.cs
+        │   ├── FlashCardContentExtractor.cs
+        │   └── TagNormalizer.cs
+        └── Anki Generation
+            ├── AnkiGeneratorService.cs
+            ├── AnkiNoteTypeFactory.cs
+            ├── DeckHierarchyBuilder.cs
+            └── AnkiCardGenerator.cs
 
 ```
 
+## Architecture
+
+The refactored architecture uses **dependency injection** and separates concerns into focused services:
+
+### Markdown Parsing Layer
+- **DeckConfigParser**: Extracts deck metadata and templates from YAML
+- **MarkdownHeaderHierarchyExtractor**: Parses header hierarchy (H1-H6)
+- **FlashCardContentExtractor**: Identifies code blocks and extracts field content
+- **TagNormalizer**: Normalizes tags (removes accents, converts to snake_case)
+- **MarkdownParserService**: Facade orchestrating the above services
+
+### Anki Generation Layer
+- **AnkiNoteTypeFactory**: Converts domain templates to AnkiNet structures
+- **DeckHierarchyBuilder**: Creates nested deck structure from header hierarchy
+- **AnkiCardGenerator**: Creates notes with metadata in correct nested deck
+- **AnkiGeneratorService**: Main orchestrator for Anki deck generation
+
+### Nested Deck Hierarchy
+Cards are organized in nested decks matching document structure:
+- Each header level creates a subdeck (H1::H2::H3)
+- Cards placed in deepest nested deck of their header chain
+- Example: `# Math > ## Ratios > ### Properties` → `DeckName::Math::Ratios::Properties`
+
 ## Dependencies
 
-- **AnkiNet**: Library for creating Anki packages
+- **Anki.NET 2.0.0**: Library for Anki packages with metadata support (custom local version)
 - **YamlDotNet**: YAML parsing for front-matter
-- **System.Data.SQLite**: SQLite support for database operations
+- **Microsoft.Extensions.DependencyInjection**: Dependency injection
+- **Microsoft.Extensions.Hosting**: Host builder for console app
 
 ## Example
 
