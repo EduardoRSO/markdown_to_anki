@@ -56,12 +56,11 @@ public class AnkiGeneratorService : IAnkiGeneratorService
             _cardGenerator.CreateCardInDeck(ankiCollection, targetDeckId, noteTypeId, cardNote);
         }
 
-        // Write the collection to file
+        // Write the collection to the requested output path
         string outputDir = Path.GetDirectoryName(outputPath) ?? Directory.GetCurrentDirectory();
-        string fileName = Path.GetFileNameWithoutExtension(outputPath);
-        string fullOutputPath = Path.Combine(outputDir, $"{fileName}_{DateTime.Now:yyyyMMddHHmmss}.apkg");
+        Directory.CreateDirectory(outputDir);
 
-        await AnkiFileWriter.WriteToFileAsync(fullOutputPath, ankiCollection);
+        await AnkiFileWriter.WriteToFileAsync(outputPath, ankiCollection);
     }
 
     private HeaderHierarchy RebuildHierarchyFromTags(List<string> tags)

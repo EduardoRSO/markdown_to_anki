@@ -1,4 +1,5 @@
 using System.Text;
+using System.Globalization;
 using MarkdownToAnki.Domain.Models;
 
 namespace MarkdownToAnki.Infrastructure.Services;
@@ -100,7 +101,7 @@ public class MarkdownDeckWriter : IMarkdownDeckWriter
         foreach (var child in node.Children)
         {
             int headingLevel = Math.Min(level + 1, 6);
-            builder.AppendLine($"{new string('#', headingLevel)} {child.Title}");
+            builder.AppendLine($"{new string('#', headingLevel)} {FormatHeadingTitle(child.Title)}");
             builder.AppendLine();
 
             foreach (var note in child.Notes)
@@ -111,6 +112,26 @@ public class MarkdownDeckWriter : IMarkdownDeckWriter
 
             WriteHeadingNodes(builder, child, separator, level + 1);
         }
+    }
+
+    private static string FormatHeadingTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return title;
+        }
+
+        var words = title
+            .Split('_', StringSplitOptions.RemoveEmptyEntries)
+            .Select(word => word.ToLowerInvariant())
+            .ToArray();
+
+        if (words.Length == 0)
+        {
+            return title;
+        }
+
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(string.Join(' ', words));
     }
 
     private static void WriteNote(StringBuilder builder, FlashCardNote note, string separator)

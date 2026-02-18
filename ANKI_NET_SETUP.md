@@ -14,6 +14,7 @@ You're now using Anki.NET 2.0.0 from a local NuGet feed with the new metadata an
 
 - **Fork**: `C:\Repos\forks\Anki.NET\src\AnkiNet`
 - **Branch**: `feature/expose-note-metadata-and-field-properties`
+- **Upstream URL**: https://github.com/EduardoRSO/Anki.NET/tree/feature/expose-note-metadata-and-field-properties?tab=readme-ov-file
 
 ## Using the New Features
 
