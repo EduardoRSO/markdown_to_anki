@@ -2,10 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MarkdownToAnki.Domain\MarkdownToAnki.Domain.csproj" />
+    <ProjectReference Include="..\..\..\forks\Anki.NET\src\AnkiNet\AnkiNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Anki.NET" Version="2.0.0" />
     <PackageReference Include="System.Data.SQLite" Version="2.0.2" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>

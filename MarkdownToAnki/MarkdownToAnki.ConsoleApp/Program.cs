@@ -24,6 +24,11 @@ class Program
                 services.AddSingleton<IAnkiNoteTypeFactory, AnkiNoteTypeFactory>();
                 services.AddSingleton<IAnkiCardGenerator, AnkiCardGenerator>();
                 services.AddSingleton<IAnkiGeneratorService, AnkiGeneratorService>();
+
+                // Register Anki reading and markdown writing services
+                services.AddSingleton<IAnkiPackageReader, AnkiPackageReader>();
+                services.AddSingleton<IMarkdownDeckWriter, MarkdownDeckWriter>();
+                services.AddSingleton<IApkgToMarkdownService, ApkgToMarkdownService>();
             })
             .Build();
 
@@ -31,7 +36,7 @@ class Program
 
         if (args.Length == 0)
         {
-            logger.LogInformation("Usage: md2anki <input.md> [output.apkg]");
+            logger.LogInformation("Usage: md2anki <input.md|input.apkg> [output.apkg|output.md]");
             return 1;
         }
 
@@ -42,17 +47,29 @@ class Program
             return 2;
         }
 
+        bool isApkgInput = string.Equals(Path.GetExtension(input), ".apkg", StringComparison.OrdinalIgnoreCase);
         string output = args.Length > 1
             ? args[1]
-            : Path.Combine(Directory.GetCurrentDirectory(), $"ankiDeck_{DateTime.Now:yyyyMMddHHmmss}.apkg");
+            : isApkgInput
+                ? Path.ChangeExtension(input, ".md")
+                : Path.Combine(Directory.GetCurrentDirectory(), $"ankiDeck_{DateTime.Now:yyyyMMddHHmmss}.apkg");
 
         try
         {
-            var parser = host.Services.GetRequiredService<IMarkdownParserService>();
-            var generator = host.Services.GetRequiredService<IAnkiGeneratorService>();
+            if (isApkgInput)
+            {
+                var apkgToMarkdown = host.Services.GetRequiredService<IApkgToMarkdownService>();
+                await apkgToMarkdown.GenerateMarkdownAsync(input, output);
+                logger.LogInformation("Markdown generated at {Path}", output);
+            }
+            else
+            {
+                var parser = host.Services.GetRequiredService<IMarkdownParserService>();
+                var generator = host.Services.GetRequiredService<IAnkiGeneratorService>();
 
-            await generator.GenerateApkg(parser, input, output);
-            logger.LogInformation("Deck generated at {Path}", output);
+                await generator.GenerateApkg(parser, input, output);
+                logger.LogInformation("Deck generated at {Path}", output);
+            }
         }
         catch (Exception ex)
         {
