@@ -11,7 +11,18 @@ class Program
         using IHost host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((_, services) =>
             {
+                // Register parser services
+                services.AddSingleton<IDeckConfigParser, DeckConfigParser>();
+                services.AddSingleton<IMarkdownHeaderHierarchyExtractor, MarkdownHeaderHierarchyExtractor>();
+                services.AddSingleton<IFlashCardContentExtractor, FlashCardContentExtractor>();
+                services.AddSingleton<ITagNormalizer, TagNormalizer>();
+
+                // Register main parser as facade
                 services.AddSingleton<IMarkdownParserService, MarkdownParserService>();
+
+                // Register Anki generation services
+                services.AddSingleton<IAnkiNoteTypeFactory, AnkiNoteTypeFactory>();
+                services.AddSingleton<IAnkiCardGenerator, AnkiCardGenerator>();
                 services.AddSingleton<IAnkiGeneratorService, AnkiGeneratorService>();
             })
             .Build();
