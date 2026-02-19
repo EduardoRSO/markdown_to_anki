@@ -4,11 +4,13 @@ source: "Test Source"
 separator: "---"
 templates:
   - name: "Concept"
+    anki_model_type: "standard"
     fields: [Term, Definition, Example]
     html_question_format: "<b>{{Term}}</b>"
     html_answer_format: "{{Definition}}<br><i>{{Example}}</i>"
     css_format: ".card { }"
   - name: "Question"
+    anki_model_type: "standard"
     fields: [Question, Answer, Explanation]
     html_question_format: "{{Question}}"
     html_answer_format: "{{Answer}}<br><small>{{Explanation}}</small>"

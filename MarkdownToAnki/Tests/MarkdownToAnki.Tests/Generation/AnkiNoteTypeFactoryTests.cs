@@ -13,7 +13,7 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
+        var result = factory.CreateNoteType(template);
 
         // ASSERT
         result.Should().NotBeNull();
@@ -30,6 +30,7 @@ public class AnkiNoteTypeFactoryTests
         var template = new TemplateDefinition
         {
             Name = "Custom",
+            ModelType = TemplateModelType.Standard,
             Fields = new List<string> { "Q", "A", "Extra" },
             HtmlQuestionFormat = "<custom>{{Q}}</custom>",
             HtmlAnswerFormat = "<custom>{{A}}</custom>",
@@ -38,7 +39,7 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
+        var result = factory.CreateNoteType(template);
 
         // ASSERT
         result.Fields.Should().HaveCount(3);
@@ -55,7 +56,7 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
+        var result = factory.CreateNoteType(template);
 
         // ASSERT
         result.Fields.Should().HaveCount(4);
@@ -66,16 +67,26 @@ public class AnkiNoteTypeFactoryTests
     public void CreateNoteType_WithClozeModel_UsesClozeModelAndFields()
     {
         // ARRANGE
-        var template = TestDataBuilder.CreateBasicTemplate("Omissao");
+        var template = new TemplateDefinition
+        {
+            Name = "Omissao",
+            ModelType = TemplateModelType.Cloze,
+            Fields = ["Text", "Back Extra"],
+            HtmlQuestionFormat = "{{cloze:Text}}",
+            HtmlAnswerFormat = "{{cloze:Text}}<br>{{Back Extra}}",
+            CssFormat = ".card {}",
+            Usage = string.Empty
+        };
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Cloze);
+        var result = factory.CreateNoteType(template);
 
         // ASSERT
         result.ModelType.Should().Be(AnkiNoteTypeModelType.Cloze);
         result.FieldNames.Should().Equal("Text", "Back Extra");
         result.CardTypes.Should().ContainSingle();
         result.CardTypes[0].QuestionFormat.Should().Be("{{cloze:Text}}");
+        result.CardTypes[0].AnswerFormat.Should().Be("{{cloze:Text}}<br>{{Back Extra}}");
     }
 }

@@ -34,6 +34,7 @@ public class MarkdownDeckWriter : IMarkdownDeckWriter
         foreach (var template in deckDefinition.Templates)
         {
             builder.AppendLine($"  - name: {ToYamlScalar(template.Name)}");
+            builder.AppendLine($"    anki_model_type: {ToYamlScalar(template.ModelType == TemplateModelType.Cloze ? "cloze" : "standard")}");
             builder.AppendLine($"    fields: [{string.Join(", ", template.Fields.Select(ToYamlScalar))}]");
             builder.AppendLine($"    usage: {ToYamlScalar(template.Usage)}");
             WriteYamlScalar(builder, "html_question_format", template.HtmlQuestionFormat, 4);

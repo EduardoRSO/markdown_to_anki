@@ -26,7 +26,7 @@ public class AnkiCardGeneratorTests
         var generator = new AnkiCardGenerator();
 
         // ACT & ASSERT
-        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card);
+        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, card);
         act.Should().NotThrow();
     }
 
@@ -61,7 +61,7 @@ public class AnkiCardGeneratorTests
         var generator = new AnkiCardGenerator();
 
         // ACT & ASSERT
-        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card);
+        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, card);
         act.Should().NotThrow();
     }
 
@@ -97,7 +97,7 @@ public class AnkiCardGeneratorTests
 
         // ACT & ASSERT
         var ex = Record.Exception(() => 
-            generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card));
+            generator.CreateCardInDeck(collection, deckId, noteTypeId, card));
         ex.Should().BeNull();
     }
 
@@ -121,7 +121,8 @@ public class AnkiCardGeneratorTests
         var template = new TemplateDefinition
         {
             Name = "Omissao",
-            Fields = ["Texto", "Comentário"]
+            ModelType = TemplateModelType.Cloze,
+            Fields = ["Text", "Back Extra"]
         };
 
         var card = new FlashCardNote
@@ -129,8 +130,8 @@ public class AnkiCardGeneratorTests
             Template = template,
             FieldValues = new Dictionary<string, string>
             {
-                { "Texto", "{{c1::Paris}} fica na {{c2::França}}" },
-                { "Comentário", "Capital e país" }
+                { "Text", "{{c1::Paris}} fica na {{c2::França}}" },
+                { "Back Extra", "Capital e país" }
             },
             Tags = new List<string> { "geo" }
         };
@@ -139,7 +140,7 @@ public class AnkiCardGeneratorTests
 
         // ACT & ASSERT
         var ex = Record.Exception(() =>
-            generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Cloze, card));
+            generator.CreateCardInDeck(collection, deckId, noteTypeId, card));
 
         ex.Should().BeNull();
     }

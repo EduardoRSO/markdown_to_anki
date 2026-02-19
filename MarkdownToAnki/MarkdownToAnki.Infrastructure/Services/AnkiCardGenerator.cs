@@ -12,7 +12,6 @@ public class AnkiCardGenerator : IAnkiCardGenerator
         AnkiCollection collection,
         long deckId,
         long noteTypeId,
-        AnkiNoteTypeModelType modelType,
         FlashCardNote cardNote)
     {
         // Convert tags list to space-separated string format (Anki tag format)
@@ -20,7 +19,7 @@ public class AnkiCardGenerator : IAnkiCardGenerator
             ? " " + string.Join(" ", cardNote.Tags) + " "
             : "";
 
-        var fields = BuildFields(cardNote, modelType);
+        var fields = BuildFields(cardNote);
 
         // Create note with metadata
         collection.CreateNoteWithMetadata(
@@ -34,9 +33,9 @@ public class AnkiCardGenerator : IAnkiCardGenerator
         );
     }
 
-    private static string[] BuildFields(FlashCardNote cardNote, AnkiNoteTypeModelType modelType)
+    private static string[] BuildFields(FlashCardNote cardNote)
     {
-        if (modelType == AnkiNoteTypeModelType.Cloze)
+        if (cardNote.Template.ModelType == TemplateModelType.Cloze)
         {
             var primaryFieldName = cardNote.Template.Fields.FirstOrDefault();
             var secondaryFieldName = cardNote.Template.Fields.Skip(1).FirstOrDefault();

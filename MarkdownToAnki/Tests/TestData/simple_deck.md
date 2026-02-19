@@ -4,6 +4,7 @@ source: "Test Source"
 separator: "---"
 templates:
   - name: "Basic"
+    anki_model_type: "standard"
     fields: [Question, Answer]
     html_question_format: "<div class='question'>{{Question}}</div>"
     html_answer_format: "<div class='answer'>{{Answer}}</div>"

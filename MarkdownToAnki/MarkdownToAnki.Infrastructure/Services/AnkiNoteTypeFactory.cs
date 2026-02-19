@@ -8,9 +8,9 @@ namespace MarkdownToAnki.Infrastructure.Services;
 /// </summary>
 public class AnkiNoteTypeFactory : IAnkiNoteTypeFactory
 {
-    public AnkiNoteType CreateNoteType(TemplateDefinition template, AnkiNoteTypeModelType modelType)
+    public AnkiNoteType CreateNoteType(TemplateDefinition template)
     {
-        return modelType == AnkiNoteTypeModelType.Cloze
+        return template.ModelType == TemplateModelType.Cloze
             ? CreateClozeNoteType(template)
             : CreateStandardNoteType(template);
     }
@@ -36,14 +36,14 @@ public class AnkiNoteTypeFactory : IAnkiNoteTypeFactory
     private static AnkiNoteType CreateClozeNoteType(TemplateDefinition template)
     {
         var cardType = new AnkiCardType(
-            $"{template.Name} cloze card",
+            $"{template.Name} card",
             0,
-            "{{cloze:Text}}",
-            "{{cloze:Text}}<br>{{Back Extra}}"
+            template.HtmlQuestionFormat,
+            template.HtmlAnswerFormat
         );
 
         return new AnkiNoteType(
-            name: $"{template.Name} cloze template",
+            name: $"{template.Name} template",
             cardTypes: [cardType],
             fieldNames: ["Text", "Back Extra"],
             css: template.CssFormat,

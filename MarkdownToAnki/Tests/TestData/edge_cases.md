@@ -4,6 +4,7 @@ source: "Test"
 separator: "||"
 templates:
   - name: "Special"
+    anki_model_type: "standard"
     fields: [Field1, Field2, Field3]
     html_question_format: "{{Field1}}"
     html_answer_format: "{{Field2}}<br>{{Field3}}"

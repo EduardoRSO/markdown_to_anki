@@ -61,6 +61,7 @@ source: "My Study Material"
 separator: "---"
 templates:
   - name: "Conceito"
+    anki_model_type: "standard" # required: standard | cloze
     fields: [Pergunta, Resposta, Contexto]
     html_question_format: "<div class='question'>{{Pergunta}}</div>"
     html_answer_format: "<div class='answer'>{{Resposta}}</div>"

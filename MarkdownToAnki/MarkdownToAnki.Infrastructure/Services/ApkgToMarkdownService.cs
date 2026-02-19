@@ -112,6 +112,7 @@ public class ApkgToMarkdownService : IApkgToMarkdownService
         return new TemplateDefinition
         {
             Name = templateName,
+            ModelType = noteType.ModelType == AnkiNoteTypeModelType.Cloze ? TemplateModelType.Cloze : TemplateModelType.Standard,
             Fields = noteType.FieldNames.ToList(),
             Usage = string.Empty,
             HtmlQuestionFormat = cardType.QuestionFormat,

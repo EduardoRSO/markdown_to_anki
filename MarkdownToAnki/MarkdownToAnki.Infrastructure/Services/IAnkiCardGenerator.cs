@@ -9,6 +9,5 @@ public interface IAnkiCardGenerator
         AnkiCollection collection,
         long deckId,
         long noteTypeId,
-        AnkiNoteTypeModelType modelType,
         FlashCardNote cardNote);
 }

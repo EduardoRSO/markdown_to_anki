@@ -20,6 +20,7 @@ public class DeckConfigParserTests
         result.Separator.Should().Be("---");
         result.Templates.Should().HaveCount(1);
         result.Templates[0].Name.Should().Be("Basic");
+        result.Templates[0].ModelType.Should().Be(TemplateModelType.Standard);
     }
 
     [Fact]
@@ -35,8 +36,10 @@ public class DeckConfigParserTests
         // ASSERT
         result.Templates.Should().HaveCount(2);
         result.Templates[0].Name.Should().Be("Concept");
+        result.Templates[0].ModelType.Should().Be(TemplateModelType.Standard);
         result.Templates[0].Fields.Should().ContainInOrder("Term", "Definition");
         result.Templates[1].Name.Should().Be("Question");
+        result.Templates[1].ModelType.Should().Be(TemplateModelType.Standard);
         result.Templates[1].Fields.Should().HaveCount(3);
     }
 
@@ -44,17 +47,17 @@ public class DeckConfigParserTests
     public void ParseDeckConfig_WithCustomSeparator_ParsesCorrectly()
     {
         // ARRANGE
-        var yamlContent = """
-            deck_name: "Custom Sep"
-            source: "Test"
-            separator: "||"
-            templates:
-              - name: "Format"
-                fields: [A, B]
-                html_question_format: "{{A}}"
-                html_answer_format: "{{B}}"
-                css_format: ""
-            """;
+                var yamlContent =
+                    "deck_name: \"Custom Sep\"\n" +
+                    "source: \"Test\"\n" +
+                    "separator: \"||\"\n" +
+                    "templates:\n" +
+                    "  - name: \"Format\"\n" +
+                    "    anki_model_type: \"standard\"\n" +
+                    "    fields: [A, B]\n" +
+                    "    html_question_format: \"{{A}}\"\n" +
+                    "    html_answer_format: \"{{B}}\"\n" +
+                    "    css_format: \"\"";
         var parser = new DeckConfigParser();
 
         // ACT
@@ -87,5 +90,30 @@ public class DeckConfigParserTests
 
         // ASSERT
         result.Templates[1].Fields.Should().Equal("Question", "Answer", "Explanation");
+    }
+
+    [Fact]
+    public void ParseDeckConfig_WithoutAnkiModelType_ThrowsException()
+    {
+        // ARRANGE
+        var yamlContent = """
+            deck_name: "No Model"
+            source: ""
+            separator: "---"
+            templates:
+              - name: "Basic"
+                fields: [Question, Answer]
+                html_question_format: "{{Question}}"
+                html_answer_format: "{{Answer}}"
+                css_format: ""
+            """;
+        var parser = new DeckConfigParser();
+
+        // ACT
+        var act = () => parser.ParseDeckConfig(yamlContent);
+
+        // ASSERT
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*anki_model_type*");
     }
 }

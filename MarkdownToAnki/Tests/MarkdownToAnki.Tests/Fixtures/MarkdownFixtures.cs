@@ -12,6 +12,7 @@ source: "Test Source"
 separator: "---"
 templates:
   - name: "Basic"
+    anki_model_type: "standard"
     fields: [Question, Answer]
     html_question_format: "<div>{{Question}}</div>"
     html_answer_format: "<div>{{Answer}}</div>"
@@ -24,11 +25,13 @@ source: "Test"
 separator: "---"
 templates:
   - name: "Concept"
+    anki_model_type: "standard"
     fields: [Term, Definition]
     html_question_format: "{{Term}}"
     html_answer_format: "{{Definition}}"
     css_format: ""
   - name: "Question"
+    anki_model_type: "standard"
     fields: [Question, Answer, Explanation]
     html_question_format: "{{Question}}"
     html_answer_format: "{{Answer}}<br>{{Explanation}}"

@@ -13,6 +13,7 @@ public static class TestDataBuilder
         return new TemplateDefinition
         {
             Name = name,
+            ModelType = TemplateModelType.Standard,
             Fields = new List<string> { "Question", "Answer" },
             HtmlQuestionFormat = questionFormat,
             HtmlAnswerFormat = answerFormat,
@@ -29,6 +30,7 @@ public static class TestDataBuilder
         return new TemplateDefinition
         {
             Name = name,
+            ModelType = TemplateModelType.Standard,
             Fields = new List<string>(fields),
             HtmlQuestionFormat = "<b>{{Term}}</b>",
             HtmlAnswerFormat = "{{Definition}}<br><i>{{Example}}</i>",

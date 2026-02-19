@@ -1,6 +1,5 @@
 using AnkiNet;
 using MarkdownToAnki.Domain.Models;
-using System.Text.RegularExpressions;
 
 namespace MarkdownToAnki.Infrastructure.Services;
 
@@ -11,8 +10,6 @@ namespace MarkdownToAnki.Infrastructure.Services;
 /// </summary>
 public class AnkiGeneratorService : IAnkiGeneratorService
 {
-    private static readonly Regex ClozePattern = new("{{\\s*c\\d+::", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
     private readonly IAnkiNoteTypeFactory _noteTypeFactory;
     private readonly IAnkiCardGenerator _cardGenerator;
 
@@ -30,15 +27,13 @@ public class AnkiGeneratorService : IAnkiGeneratorService
 
         // Create AnkiNet structures from templates
         var ankiCollection = new AnkiCollection();
-        var standardNoteTypeMap = new Dictionary<string, long>();
-        var clozeNoteTypeMap = new Dictionary<string, long>();
-        var templateMap = deckDefinition.Templates.ToDictionary(t => t.Name);
+        var noteTypeMap = new Dictionary<string, long>();
 
         foreach (var template in deckDefinition.Templates)
         {
-            var standardNoteType = _noteTypeFactory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
-            var standardNoteTypeId = ankiCollection.CreateNoteType(standardNoteType);
-            standardNoteTypeMap[template.Name] = standardNoteTypeId;
+            var noteType = _noteTypeFactory.CreateNoteType(template);
+            var noteTypeId = ankiCollection.CreateNoteType(noteType);
+            noteTypeMap[template.Name] = noteTypeId;
         }
 
         // Create root deck
@@ -57,25 +52,8 @@ public class AnkiGeneratorService : IAnkiGeneratorService
             long targetDeckId = hierarchyBuilder.GetOrCreateDeckForHierarchy(rootDeckId, headerHierarchy);
 
             // Create the card in the target deck
-            var modelType = DetermineModelType(cardNote);
-            long noteTypeId;
-
-            if (modelType == AnkiNoteTypeModelType.Cloze)
-            {
-                if (!clozeNoteTypeMap.TryGetValue(cardNote.Template.Name, out noteTypeId))
-                {
-                    var template = templateMap[cardNote.Template.Name];
-                    var clozeNoteType = _noteTypeFactory.CreateNoteType(template, AnkiNoteTypeModelType.Cloze);
-                    noteTypeId = ankiCollection.CreateNoteType(clozeNoteType);
-                    clozeNoteTypeMap[cardNote.Template.Name] = noteTypeId;
-                }
-            }
-            else
-            {
-                noteTypeId = standardNoteTypeMap[cardNote.Template.Name];
-            }
-
-            _cardGenerator.CreateCardInDeck(ankiCollection, targetDeckId, noteTypeId, modelType, cardNote);
+            long noteTypeId = noteTypeMap[cardNote.Template.Name];
+            _cardGenerator.CreateCardInDeck(ankiCollection, targetDeckId, noteTypeId, cardNote);
         }
 
         // Write the collection to the requested output path
@@ -83,19 +61,6 @@ public class AnkiGeneratorService : IAnkiGeneratorService
         Directory.CreateDirectory(outputDir);
 
         await AnkiFileWriter.WriteToFileAsync(outputPath, ankiCollection);
-    }
-
-    private static AnkiNoteTypeModelType DetermineModelType(FlashCardNote cardNote)
-    {
-        foreach (var value in cardNote.FieldValues.Values)
-        {
-            if (!string.IsNullOrEmpty(value) && ClozePattern.IsMatch(value))
-            {
-                return AnkiNoteTypeModelType.Cloze;
-            }
-        }
-
-        return AnkiNoteTypeModelType.Standard;
     }
 
     private HeaderHierarchy RebuildHierarchyFromTags(List<string> tags)

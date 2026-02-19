@@ -4,6 +4,7 @@ source: "Nova concursos"
 separator: "---"
 templates:
   - name: "Conceito"
+    anki_model_type: "standard"
     fields: [Pergunta, Resposta, Contexto]
     usage: "Pergunta --- Resposta --- Contexto/Exemplos"
     html_question_format: "<div class='question'>{{Pergunta}}</div>"
@@ -33,6 +34,7 @@ templates:
         font-style: italic;
       }
   - name: "Questao"
+    anki_model_type: "standard"
     fields: [Enunciado, Gabarito, Comentário, Fonte]
     usage: "Enunciado --- Letra do Gabarito --- Explicação --- Referência"
     html_question_format: "<div class='question'>{{Enunciado}}</div>"
@@ -70,10 +72,11 @@ templates:
         margin-top: 10px;
       }
   - name: "Omissao"
-    fields: [Texto, Comentário]
+    anki_model_type: "cloze"
+    fields: [Text, Back Extra]
     usage: "Texto com {{c1::cloze}} --- Observação adicional"
-    html_question_format: "<div class='cloze-question'>{{Texto}}</div>"
-    html_answer_format: "<div class='cloze-answer'>{{Comentário}}</div>"
+    html_question_format: "{{cloze:Text}}"
+    html_answer_format: "{{cloze:Text}}<br>{{Back Extra}}"
     css_format: |
       .card {
         font-family: arial;

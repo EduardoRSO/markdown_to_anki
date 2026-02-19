@@ -31,7 +31,7 @@ public class DeckConfigParser : IDeckConfigParser
         return deckDefinition;
     }
 
-    private string GetYamlValue(YamlMappingNode root, string key)
+    private static string GetYamlValue(YamlMappingNode root, string key)
     {
         var keyNode = root.Children.Keys.FirstOrDefault(k =>
             k is YamlScalarNode && ((YamlScalarNode)k).Value == key);
@@ -64,9 +64,11 @@ public class DeckConfigParser : IDeckConfigParser
         {
             if (item is YamlMappingNode templateMap)
             {
+                var templateName = GetYamlValue(templateMap, "name");
                 var template = new TemplateDefinition
                 {
-                    Name = GetYamlValue(templateMap, "name"),
+                    Name = templateName,
+                    ModelType = ParseTemplateModelType(templateMap, templateName),
                     Fields = ParseFields(templateMap),
                     Usage = GetYamlValue(templateMap, "usage"),
                     HtmlQuestionFormat = GetYamlValue(templateMap, "html_question_format"),
@@ -78,6 +80,22 @@ public class DeckConfigParser : IDeckConfigParser
         }
 
         return templates;
+    }
+
+    private static TemplateModelType ParseTemplateModelType(YamlMappingNode templateMap, string templateName)
+    {
+        var rawModelType = GetYamlValue(templateMap, "anki_model_type").Trim();
+        if (string.IsNullOrWhiteSpace(rawModelType))
+        {
+            throw new InvalidOperationException($"Template '{templateName}' must define 'anki_model_type' with value 'standard' or 'cloze'.");
+        }
+
+        return rawModelType.ToLowerInvariant() switch
+        {
+            "standard" => TemplateModelType.Standard,
+            "cloze" => TemplateModelType.Cloze,
+            _ => throw new InvalidOperationException($"Template '{templateName}' has invalid anki_model_type '{rawModelType}'. Use 'standard' or 'cloze'.")
+        };
     }
 
     private List<string> ParseFields(YamlMappingNode templateMap)
