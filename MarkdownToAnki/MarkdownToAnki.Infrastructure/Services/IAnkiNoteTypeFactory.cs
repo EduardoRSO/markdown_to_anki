@@ -5,5 +5,5 @@ namespace MarkdownToAnki.Infrastructure.Services;
 
 public interface IAnkiNoteTypeFactory
 {
-    AnkiNoteType CreateNoteType(TemplateDefinition template);
+    AnkiNoteType CreateNoteType(TemplateDefinition template, AnkiNoteTypeModelType modelType);
 }

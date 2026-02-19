@@ -1,5 +1,6 @@
 namespace MarkdownToAnki.Tests.Generation;
 
+using AnkiNet;
 using MarkdownToAnki.Tests.Fixtures;
 
 public class AnkiNoteTypeFactoryTests
@@ -12,13 +13,14 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template);
+        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
 
         // ASSERT
         result.Should().NotBeNull();
         result.Name.Should().Contain("MyTemplate");
         result.CardTypes.Should().HaveCount(1);
         result.Fields.Should().HaveCount(2);
+        result.ModelType.Should().Be(AnkiNoteTypeModelType.Standard);
     }
 
     [Fact]
@@ -36,7 +38,7 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template);
+        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
 
         // ASSERT
         result.Fields.Should().HaveCount(3);
@@ -53,10 +55,27 @@ public class AnkiNoteTypeFactoryTests
         var factory = new AnkiNoteTypeFactory();
 
         // ACT
-        var result = factory.CreateNoteType(template);
+        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Standard);
 
         // ASSERT
         result.Fields.Should().HaveCount(4);
         result.CardTypes.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void CreateNoteType_WithClozeModel_UsesClozeModelAndFields()
+    {
+        // ARRANGE
+        var template = TestDataBuilder.CreateBasicTemplate("Omissao");
+        var factory = new AnkiNoteTypeFactory();
+
+        // ACT
+        var result = factory.CreateNoteType(template, AnkiNoteTypeModelType.Cloze);
+
+        // ASSERT
+        result.ModelType.Should().Be(AnkiNoteTypeModelType.Cloze);
+        result.FieldNames.Should().Equal("Text", "Back Extra");
+        result.CardTypes.Should().ContainSingle();
+        result.CardTypes[0].QuestionFormat.Should().Be("{{cloze:Text}}");
     }
 }

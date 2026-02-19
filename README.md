@@ -172,12 +172,12 @@ Cards are organized in nested decks matching document structure:
 
 ## Dependencies
 
-- **Anki.NET 2.0.0 (required custom build)**: This project currently depends on the branch `feature/expose-note-metadata-and-field-properties` from https://github.com/EduardoRSO/Anki.NET/tree/feature/expose-note-metadata-and-field-properties?tab=readme-ov-file
+- **Anki.NET (fork source via ProjectReference)**: This project currently references `C:\Repos\forks\Anki.NET\src\AnkiNet\AnkiNet.csproj` (branch `feature/expose-note-metadata-and-field-properties`)
 - **YamlDotNet**: YAML parsing for front-matter
 - **Microsoft.Extensions.DependencyInjection**: Dependency injection
 - **Microsoft.Extensions.Hosting**: Host builder for console app
 
-See `ANKI_NET_SETUP.md` for local NuGet feed setup and update workflow.
+See `ANKI_NET_SETUP.md` for source-reference workflow and optional local NuGet packaging workflow.
 
 ## Example
 

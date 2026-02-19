@@ -26,7 +26,7 @@ public class AnkiCardGeneratorTests
         var generator = new AnkiCardGenerator();
 
         // ACT & ASSERT
-        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, card);
+        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card);
         act.Should().NotThrow();
     }
 
@@ -61,7 +61,7 @@ public class AnkiCardGeneratorTests
         var generator = new AnkiCardGenerator();
 
         // ACT & ASSERT
-        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, card);
+        var act = () => generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card);
         act.Should().NotThrow();
     }
 
@@ -97,7 +97,50 @@ public class AnkiCardGeneratorTests
 
         // ACT & ASSERT
         var ex = Record.Exception(() => 
-            generator.CreateCardInDeck(collection, deckId, noteTypeId, card));
+            generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Standard, card));
+        ex.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateCardInDeck_WithClozeModel_ExecutesWithoutException()
+    {
+        // ARRANGE
+        var collection = new AnkiCollection();
+        var deckId = collection.CreateDeck("TestDeck");
+
+        var noteTypeId = collection.CreateNoteType(
+            new AnkiNoteType(
+                name: "Omissao cloze template",
+                cardTypes: [new AnkiCardType("Cloze", 0, "{{cloze:Text}}", "{{cloze:Text}}<br>{{Back Extra}}")],
+                fieldNames: ["Text", "Back Extra"],
+                css: "",
+                modelType: AnkiNoteTypeModelType.Cloze
+            )
+        );
+
+        var template = new TemplateDefinition
+        {
+            Name = "Omissao",
+            Fields = ["Texto", "Comentário"]
+        };
+
+        var card = new FlashCardNote
+        {
+            Template = template,
+            FieldValues = new Dictionary<string, string>
+            {
+                { "Texto", "{{c1::Paris}} fica na {{c2::França}}" },
+                { "Comentário", "Capital e país" }
+            },
+            Tags = new List<string> { "geo" }
+        };
+
+        var generator = new AnkiCardGenerator();
+
+        // ACT & ASSERT
+        var ex = Record.Exception(() =>
+            generator.CreateCardInDeck(collection, deckId, noteTypeId, AnkiNoteTypeModelType.Cloze, card));
+
         ex.Should().BeNull();
     }
 }

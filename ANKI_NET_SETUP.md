@@ -2,19 +2,19 @@
 
 ## Current Setup
 
-You're now using Anki.NET 2.0.0 from a local NuGet feed with the new metadata and field properties features.
+This project is currently using Anki.NET directly from your local fork source code via `ProjectReference`.
 
-### Local NuGet Feed Location
+### Local NuGet Feed (Optional)
 
 - **Feed Path**: `C:\Repos\NugetLocal`
 - **Feed Name**: `Local-Anki-Dev`
-- **Package**: `Anki.NET.2.0.0.nupkg`
+- **Use case**: optional packaging workflow (not the current default in this repo)
 
 ### Source Location
 
 - **Fork**: `C:\Repos\forks\Anki.NET\src\AnkiNet`
 - **Branch**: `feature/expose-note-metadata-and-field-properties`
-- **Upstream URL**: https://github.com/EduardoRSO/Anki.NET/tree/feature/expose-note-metadata-and-field-properties?tab=readme-ov-file
+- **Upstream URL**: <https://github.com/EduardoRSO/Anki.NET/tree/feature/expose-note-metadata-and-field-properties?tab=readme-ov-file>
 
 ## Using the New Features
 
@@ -111,20 +111,39 @@ foreach (var noteType in collection.NoteTypes)
 }
 ```
 
-## Updating the Local Package
+## Updating Anki.NET Changes (Current Source-Reference Flow)
 
-When you make changes to the Anki.NET fork, rebuild the local package:
+When you make changes to the Anki.NET fork, rebuild the fork and restore this project:
 
 ```bash
-# Build from the fork
+# Build from the fork source
+cd C:\Repos\forks\Anki.NET\src\AnkiNet
+dotnet build
+
+# Restore in your project
+cd C:\Repos\markdown_to_anki\MarkdownToAnki
+dotnet restore
+```
+
+Because the dependency is a `ProjectReference`, no local NuGet cache cleanup is required for fork code changes.
+
+## Optional: Package-Based Flow
+
+If you decide to consume Anki.NET from `C:\Repos\NugetLocal` again:
+
+1. Pack your fork:
+
+```bash
 cd C:\Repos\forks\Anki.NET\src\AnkiNet
 dotnet pack -c Release -o "c:\Repos\NugetLocal"
+```
 
-# Clear NuGet cache to force re-download
-dotnet nuget locals all --clear
+1. Switch `MarkdownToAnki.Infrastructure.csproj` from `ProjectReference` to `PackageReference`.
+2. Run:
 
-# Restore packages in your project
+```bash
 cd C:\Repos\markdown_to_anki\MarkdownToAnki
+dotnet nuget locals all --clear
 dotnet restore
 ```
 
@@ -163,16 +182,15 @@ dotnet nuget locals all --clear
 dotnet restore
 ```
 
-### Verify Which Package is Being Used
+### Verify Which Dependency Source Is Being Used
 
 ```bash
-# Check the lock file
-cat C:\Repos\markdown_to_anki\MarkdownToAnki\packages.lock.json | grep -A 5 "Anki.NET"
-
-# Or check the package location
-cd C:\Repos\markdown_to_anki\MarkdownToAnki
-dotnet build --verbosity diagnostic 2>&1 | grep -i "anki"
+# Verify source project reference (current setup)
+cd C:\Repos\markdown_to_anki\MarkdownToAnki\MarkdownToAnki.Infrastructure
+dotnet list reference
 ```
+
+You should see a reference to `C:\Repos\forks\Anki.NET\src\AnkiNet\AnkiNet.csproj`.
 
 ### Local NuGet Sources Configuration
 
@@ -199,8 +217,8 @@ C:\Repos\
 ├── forks\Anki.NET\
 │   └── src\AnkiNet\        ← Fork with new features (branch: feature/expose-note-metadata-and-field-properties)
 ├── NugetLocal\             ← Local NuGet feed (contains Anki.NET.2.0.0.nupkg)
-└── markdown_to_anki\
-    └── MarkdownToAnki\     ← Your project (uses local Anki.NET package)
+    └── markdown_to_anki\
+        └── MarkdownToAnki\     ← Your project (uses local Anki.NET source via ProjectReference)
 ```
 
 ## Important Notes
@@ -226,6 +244,6 @@ C:\Repos\
 
 ---
 
-**Last Updated**: February 18, 2026
-**Local Package Version**: 2.0.0
+**Last Updated**: February 19, 2026
+**Dependency Mode**: ProjectReference to local fork source
 **Fork Branch**: feature/expose-note-metadata-and-field-properties
