@@ -1,4 +1,5 @@
 using FluentAssertions;
+using AnkiNet;
 using MarkdownToAnki.Infrastructure.Services;
 
 namespace MarkdownToAnki.Tests.Import;
@@ -223,6 +224,69 @@ public class MarkdownRoundTripTests
         finally
         {
             if (File.Exists(outputMd)) File.Delete(outputMd);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateApkg_WithTemplateMediaFiles_EmbedsMediaInPackage()
+    {
+        // ARRANGE
+        var tempDir = Path.Combine(Path.GetTempPath(), $"media_{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+
+        var markdownPath = Path.Combine(tempDir, "media_deck.md");
+        var sourceMediaPath = GetTestDataPath("banana.svg");
+        var copiedMediaPath = Path.Combine(tempDir, "banana.svg");
+        var outputApkg = Path.Combine(tempDir, "media_deck.apkg");
+
+        File.Copy(sourceMediaPath, copiedMediaPath, overwrite: true);
+
+        var markdown = """
+            ---
+            deck_name: "Media Deck"
+            source: ""
+            separator: "---"
+            templates:
+              - name: "Basic"
+                anki_model_type: "standard"
+                media_files:
+                  - source: "./banana.svg"
+                fields: [Question, Answer]
+                html_question_format: "<img src='banana.svg'><div>{{Question}}</div>"
+                html_answer_format: "<img src='banana.svg'><div>{{Answer}}</div>"
+                css_format: ""
+            ---
+
+            # Media
+
+            ```Basic
+            Q
+            ---
+            A
+            ```
+            """;
+
+        await File.WriteAllTextAsync(markdownPath, markdown);
+
+        var parser = CreateParser();
+        var generator = (IAnkiGeneratorService)new AnkiGeneratorService(new AnkiNoteTypeFactory(), new AnkiCardGenerator());
+
+        try
+        {
+            // ACT
+            await generator.GenerateApkg(parser, markdownPath, outputApkg);
+            var collection = await AnkiFileReader.ReadFromFileAsync(outputApkg);
+
+            // ASSERT
+            collection.EmbeddedMediaFiles.Should().Contain(m => m.Name == "banana.svg");
+            collection.EmbeddedMediaFiles.First(m => m.Name == "banana.svg").Content.Length.Should().BeGreaterThan(0);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
         }
     }
 

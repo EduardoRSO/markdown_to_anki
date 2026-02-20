@@ -27,6 +27,7 @@ public class AnkiGeneratorService : IAnkiGeneratorService
 
         // Create AnkiNet structures from templates
         var ankiCollection = new AnkiCollection();
+        RegisterTemplateMediaFiles(ankiCollection, deckDefinition, inputPath);
         var noteTypeMap = new Dictionary<string, long>();
 
         foreach (var template in deckDefinition.Templates)
@@ -61,6 +62,43 @@ public class AnkiGeneratorService : IAnkiGeneratorService
         Directory.CreateDirectory(outputDir);
 
         await AnkiFileWriter.WriteToFileAsync(outputPath, ankiCollection);
+    }
+
+    private static void RegisterTemplateMediaFiles(AnkiCollection ankiCollection, DeckDefinition deckDefinition, string inputPath)
+    {
+        var inputDirectory = Path.GetDirectoryName(Path.GetFullPath(inputPath)) ?? Directory.GetCurrentDirectory();
+        var mediaByTargetName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var template in deckDefinition.Templates)
+        {
+            foreach (var mediaFile in template.MediaFiles)
+            {
+                var resolvedSourcePath = Path.GetFullPath(mediaFile.Source, inputDirectory);
+                if (!File.Exists(resolvedSourcePath))
+                {
+                    throw new FileNotFoundException($"Media file '{mediaFile.Source}' referenced by template '{template.Name}' was not found.", resolvedSourcePath);
+                }
+
+                var targetFileName = string.IsNullOrWhiteSpace(mediaFile.Name)
+                    ? Path.GetFileName(resolvedSourcePath)
+                    : mediaFile.Name!;
+
+                if (mediaByTargetName.TryGetValue(targetFileName, out var existingPath))
+                {
+                    if (!string.Equals(existingPath, resolvedSourcePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(
+                            $"Media file name conflict for '{targetFileName}'. " +
+                            $"Templates reference different source files: '{existingPath}' and '{resolvedSourcePath}'.");
+                    }
+
+                    continue;
+                }
+
+                mediaByTargetName[targetFileName] = resolvedSourcePath;
+                ankiCollection.AddMediaFile(resolvedSourcePath, targetFileName);
+            }
+        }
     }
 
     private HeaderHierarchy RebuildHierarchyFromTags(List<string> tags)

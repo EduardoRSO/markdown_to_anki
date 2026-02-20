@@ -69,6 +69,7 @@ public class DeckConfigParser : IDeckConfigParser
                 {
                     Name = templateName,
                     ModelType = ParseTemplateModelType(templateMap, templateName),
+                    MediaFiles = ParseMediaFiles(templateMap, templateName),
                     Fields = ParseFields(templateMap),
                     Usage = GetYamlValue(templateMap, "usage"),
                     HtmlQuestionFormat = GetYamlValue(templateMap, "html_question_format"),
@@ -119,5 +120,45 @@ public class DeckConfigParser : IDeckConfigParser
         }
 
         return fields;
+    }
+
+    private static List<TemplateMediaFileDefinition> ParseMediaFiles(YamlMappingNode templateMap, string templateName)
+    {
+        var mediaFiles = new List<TemplateMediaFileDefinition>();
+
+        var mediaKey = templateMap.Children.Keys.FirstOrDefault(k =>
+            k is YamlScalarNode scalar && scalar.Value == "media_files");
+
+        if (mediaKey == null)
+            return mediaFiles;
+
+        if (templateMap.Children[mediaKey] is not YamlSequenceNode mediaSequence)
+        {
+            throw new InvalidOperationException($"Template '{templateName}' has invalid media_files. Expected a list.");
+        }
+
+        foreach (var mediaItem in mediaSequence.Children)
+        {
+            if (mediaItem is not YamlMappingNode mediaMap)
+            {
+                throw new InvalidOperationException($"Template '{templateName}' has invalid media_files item. Expected an object with 'source'.");
+            }
+
+            var source = GetYamlValue(mediaMap, "source").Trim();
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                throw new InvalidOperationException($"Template '{templateName}' has media_files entry without required 'source'.");
+            }
+
+            var name = GetYamlValue(mediaMap, "name").Trim();
+
+            mediaFiles.Add(new TemplateMediaFileDefinition
+            {
+                Source = source,
+                Name = string.IsNullOrWhiteSpace(name) ? null : name
+            });
+        }
+
+        return mediaFiles;
     }
 }

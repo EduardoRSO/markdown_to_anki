@@ -116,4 +116,38 @@ public class DeckConfigParserTests
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*anki_model_type*");
     }
+
+    [Fact]
+    public void ParseDeckConfig_WithTemplateMediaFiles_ParsesMediaEntries()
+    {
+        // ARRANGE
+        var yamlContent =
+            "deck_name: \"Media Deck\"\n" +
+            "source: \"\"\n" +
+            "separator: \"---\"\n" +
+            "templates:\n" +
+            "  - name: \"Conceito\"\n" +
+            "    anki_model_type: \"standard\"\n" +
+            "    media_files:\n" +
+            "      - source: \"./banana.svg\"\n" +
+            "      - source: \"./logo-white.svg\"\n" +
+            "        name: \"brand-white.svg\"\n" +
+            "    fields: [Pergunta, Resposta]\n" +
+            "    html_question_format: \"{{Pergunta}}\"\n" +
+            "    html_answer_format: \"{{Resposta}}\"\n" +
+            "    css_format: \"\"";
+
+        var parser = new DeckConfigParser();
+
+        // ACT
+        var result = parser.ParseDeckConfig(yamlContent);
+
+        // ASSERT
+        result.Templates.Should().HaveCount(1);
+        result.Templates[0].MediaFiles.Should().HaveCount(2);
+        result.Templates[0].MediaFiles[0].Source.Should().Be("./banana.svg");
+        result.Templates[0].MediaFiles[0].Name.Should().BeNull();
+        result.Templates[0].MediaFiles[1].Source.Should().Be("./logo-white.svg");
+        result.Templates[0].MediaFiles[1].Name.Should().Be("brand-white.svg");
+    }
 }
