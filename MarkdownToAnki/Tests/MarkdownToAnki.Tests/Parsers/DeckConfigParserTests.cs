@@ -18,6 +18,7 @@ public class DeckConfigParserTests
         result.DeckName.Should().Be("Simple Test Deck");
         result.Source.Should().Be("Test Source");
         result.Separator.Should().Be("---");
+        result.MediaRoot.Should().Be("./media");
         result.Templates.Should().HaveCount(1);
         result.Templates[0].Name.Should().Be("Basic");
         result.Templates[0].ModelType.Should().Be(TemplateModelType.Standard);
@@ -51,9 +52,11 @@ public class DeckConfigParserTests
                     "deck_name: \"Custom Sep\"\n" +
                     "source: \"Test\"\n" +
                     "separator: \"||\"\n" +
+                    "media_root: \"./media\"\n" +
                     "templates:\n" +
                     "  - name: \"Format\"\n" +
                     "    anki_model_type: \"standard\"\n" +
+                    "    media_files: []\n" +
                     "    fields: [A, B]\n" +
                     "    html_question_format: \"{{A}}\"\n" +
                     "    html_answer_format: \"{{B}}\"\n" +
@@ -100,9 +103,11 @@ public class DeckConfigParserTests
             deck_name: "No Model"
             source: ""
             separator: "---"
+            media_root: "./media"
             templates:
               - name: "Basic"
                 fields: [Question, Answer]
+                media_files: []
                 html_question_format: "{{Question}}"
                 html_answer_format: "{{Answer}}"
                 css_format: ""
@@ -125,6 +130,7 @@ public class DeckConfigParserTests
             "deck_name: \"Media Deck\"\n" +
             "source: \"\"\n" +
             "separator: \"---\"\n" +
+            "media_root: \"./media\"\n" +
             "templates:\n" +
             "  - name: \"Conceito\"\n" +
             "    anki_model_type: \"standard\"\n" +
@@ -149,5 +155,87 @@ public class DeckConfigParserTests
         result.Templates[0].MediaFiles[0].Name.Should().BeNull();
         result.Templates[0].MediaFiles[1].Source.Should().Be("./logo-white.svg");
         result.Templates[0].MediaFiles[1].Name.Should().Be("brand-white.svg");
+    }
+
+    [Fact]
+    public void ParseDeckConfig_WithoutMediaRoot_ThrowsException()
+    {
+        // ARRANGE
+        var yamlContent = """
+            deck_name: "No Media Root"
+            source: ""
+            separator: "---"
+            templates:
+              - name: "Basic"
+                anki_model_type: "standard"
+                media_files: []
+                fields: [Question, Answer]
+                html_question_format: "{{Question}}"
+                html_answer_format: "{{Answer}}"
+                css_format: ""
+            """;
+        var parser = new DeckConfigParser();
+
+        // ACT
+        var act = () => parser.ParseDeckConfig(yamlContent);
+
+        // ASSERT
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*media_root*");
+    }
+
+    [Fact]
+    public void ParseDeckConfig_WithAbsoluteMediaRoot_ThrowsException()
+    {
+        // ARRANGE
+        var yamlContent = """
+            deck_name: "Absolute Media Root"
+            source: ""
+            separator: "---"
+            media_root: "C:/media"
+            templates:
+              - name: "Basic"
+                anki_model_type: "standard"
+                media_files: []
+                fields: [Question, Answer]
+                html_question_format: "{{Question}}"
+                html_answer_format: "{{Answer}}"
+                css_format: ""
+            """;
+        var parser = new DeckConfigParser();
+
+        // ACT
+        var act = () => parser.ParseDeckConfig(yamlContent);
+
+        // ASSERT
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*media_root*relative path*");
+    }
+
+    [Fact]
+    public void ParseDeckConfig_WithoutTemplateMediaFiles_ThrowsException()
+    {
+        // ARRANGE
+        var yamlContent = """
+            deck_name: "Missing Media Files"
+            source: ""
+            separator: "---"
+            media_root: "./media"
+            templates:
+              - name: "Basic"
+                anki_model_type: "standard"
+                fields: [Question, Answer]
+                html_question_format: "{{Question}}"
+                html_answer_format: "{{Answer}}"
+                css_format: ""
+            """;
+        var parser = new DeckConfigParser();
+
+        // ACT
+        var act = () => parser.ParseDeckConfig(yamlContent);
+
+        // ASSERT
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*must define 'media_files'*");
     }
 }

@@ -10,9 +10,11 @@ public static class MarkdownFixtures
 deck_name: "Simple Test Deck"
 source: "Test Source"
 separator: "---"
+media_root: "./media"
 templates:
   - name: "Basic"
     anki_model_type: "standard"
+    media_files: []
     fields: [Question, Answer]
     html_question_format: "<div>{{Question}}</div>"
     html_answer_format: "<div>{{Answer}}</div>"
@@ -23,15 +25,18 @@ templates:
 deck_name: "Multi Template"
 source: "Test"
 separator: "---"
+media_root: "./media"
 templates:
   - name: "Concept"
     anki_model_type: "standard"
+    media_files: []
     fields: [Term, Definition]
     html_question_format: "{{Term}}"
     html_answer_format: "{{Definition}}"
     css_format: ""
   - name: "Question"
     anki_model_type: "standard"
+    media_files: []
     fields: [Question, Answer, Explanation]
     html_question_format: "{{Question}}"
     html_answer_format: "{{Answer}}<br>{{Explanation}}"

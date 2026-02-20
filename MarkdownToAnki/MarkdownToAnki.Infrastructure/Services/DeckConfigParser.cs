@@ -25,6 +25,7 @@ public class DeckConfigParser : IDeckConfigParser
             DeckName = GetYamlValue(root, "deck_name"),
             Source = GetYamlValue(root, "source"),
             Separator = GetYamlValue(root, "separator"),
+            MediaRoot = ParseRequiredMediaRoot(root),
             Templates = ParseTemplates(root)
         };
 
@@ -40,10 +41,26 @@ public class DeckConfigParser : IDeckConfigParser
         {
             var valueNode = root.Children[keyNode];
             if (valueNode is YamlScalarNode scalarNode)
-                return scalarNode.Value;
+                return scalarNode.Value ?? string.Empty;
         }
 
         return string.Empty;
+    }
+
+    private static string ParseRequiredMediaRoot(YamlMappingNode root)
+    {
+        var mediaRoot = GetYamlValue(root, "media_root").Trim();
+        if (string.IsNullOrWhiteSpace(mediaRoot))
+        {
+            throw new InvalidOperationException("Deck must define 'media_root' (for example './media').");
+        }
+
+        if (Path.IsPathRooted(mediaRoot))
+        {
+            throw new InvalidOperationException("Deck 'media_root' must be a relative path.");
+        }
+
+        return mediaRoot;
     }
 
     private List<TemplateDefinition> ParseTemplates(YamlMappingNode root)
@@ -115,7 +132,7 @@ public class DeckConfigParser : IDeckConfigParser
 
         foreach (var field in fieldsNode.Children)
         {
-            if (field is YamlScalarNode scalarNode)
+            if (field is YamlScalarNode scalarNode && !string.IsNullOrWhiteSpace(scalarNode.Value))
                 fields.Add(scalarNode.Value);
         }
 
@@ -130,7 +147,9 @@ public class DeckConfigParser : IDeckConfigParser
             k is YamlScalarNode scalar && scalar.Value == "media_files");
 
         if (mediaKey == null)
-            return mediaFiles;
+        {
+            throw new InvalidOperationException($"Template '{templateName}' must define 'media_files' (use an empty list [] when there are no media assets).");
+        }
 
         if (templateMap.Children[mediaKey] is not YamlSequenceNode mediaSequence)
         {

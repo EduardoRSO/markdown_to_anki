@@ -51,6 +51,7 @@ public static class TestDataBuilder
             DeckName = name,
             Source = "Test Source",
             Separator = separator,
+            MediaRoot = "./media",
             Templates = new List<TemplateDefinition> { template }
         };
     }
@@ -68,6 +69,7 @@ public static class TestDataBuilder
             DeckName = name,
             Source = "Test Source",
             Separator = "---",
+            MediaRoot = "./media",
             Templates = new List<TemplateDefinition>(templates)
         };
     }

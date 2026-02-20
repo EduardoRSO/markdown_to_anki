@@ -44,6 +44,7 @@ public class ApkgToMarkdownService : IApkgToMarkdownService
             DeckName = DetermineDeckName(collection),
             Source = string.Empty,
             Separator = DefaultSeparator,
+            MediaRoot = "./media",
             Templates = templates
         };
     }

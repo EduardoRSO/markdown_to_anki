@@ -193,9 +193,12 @@ public class MarkdownRoundTripTests
     public async Task ApkgToMarkdown_TeoriaFile_ContainsExpectedHeadersAndContent()
     {
         // ARRANGE
-        var inputApkg = GetTestDataPath("teoria.apkg");
+        var inputMd = GetTestDataPath("simple_deck.md");
+        var inputApkg = Path.Combine(Path.GetTempPath(), $"teoria_{Guid.NewGuid()}.apkg");
         var outputMd = Path.Combine(Path.GetTempPath(), $"teoria_{Guid.NewGuid()}.md");
 
+        var parser = CreateParser();
+        var generator = (IAnkiGeneratorService)new AnkiGeneratorService(new AnkiNoteTypeFactory(), new AnkiCardGenerator());
         var reader = new AnkiPackageReader();
         var writer = new MarkdownDeckWriter();
         var converter = new ApkgToMarkdownService(reader, writer);
@@ -203,6 +206,7 @@ public class MarkdownRoundTripTests
         try
         {
             // ACT
+            await generator.GenerateApkg(parser, inputMd, inputApkg);
             await converter.GenerateMarkdownAsync(inputApkg, outputMd);
 
             // ASSERT
@@ -214,6 +218,8 @@ public class MarkdownRoundTripTests
             outputContent.Should().Contain("deck_name:");
             outputContent.Should().Contain("templates:");
             outputContent.Should().Contain("separator: \"---\"");
+            outputContent.Should().Contain("media_root:");
+            outputContent.Should().Contain("media_files:");
 
             // Check at least one code block exists
             outputContent.Should().Contain("```");
@@ -223,6 +229,7 @@ public class MarkdownRoundTripTests
         }
         finally
         {
+            if (File.Exists(inputApkg)) File.Delete(inputApkg);
             if (File.Exists(outputMd)) File.Delete(outputMd);
         }
     }
@@ -236,9 +243,11 @@ public class MarkdownRoundTripTests
 
         var markdownPath = Path.Combine(tempDir, "media_deck.md");
         var sourceMediaPath = GetTestDataPath("banana.svg");
-        var copiedMediaPath = Path.Combine(tempDir, "banana.svg");
+        var mediaDir = Path.Combine(tempDir, "media");
+        var copiedMediaPath = Path.Combine(mediaDir, "banana.svg");
         var outputApkg = Path.Combine(tempDir, "media_deck.apkg");
 
+        Directory.CreateDirectory(mediaDir);
         File.Copy(sourceMediaPath, copiedMediaPath, overwrite: true);
 
         var markdown = """
@@ -246,6 +255,7 @@ public class MarkdownRoundTripTests
             deck_name: "Media Deck"
             source: ""
             separator: "---"
+            media_root: "./media"
             templates:
               - name: "Basic"
                 anki_model_type: "standard"

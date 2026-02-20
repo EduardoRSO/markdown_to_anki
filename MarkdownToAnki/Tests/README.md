@@ -60,8 +60,10 @@ Rather than using external files, test markdown is defined inline in fixtures:
 public static string SimpleDeckYaml => """
     deck_name: "Test"
     separator: "---"
+        media_root: "./media"
     templates:
       - name: "Basic"
+                media_files: []
         ...
     """;
 ```

@@ -67,13 +67,44 @@ public class AnkiGeneratorService : IAnkiGeneratorService
     private static void RegisterTemplateMediaFiles(AnkiCollection ankiCollection, DeckDefinition deckDefinition, string inputPath)
     {
         var inputDirectory = Path.GetDirectoryName(Path.GetFullPath(inputPath)) ?? Directory.GetCurrentDirectory();
+        var mediaRoot = deckDefinition.MediaRoot?.Trim();
+        var hasMediaEntries = deckDefinition.Templates.Any(t => t.MediaFiles.Count > 0);
+
+        if (string.IsNullOrWhiteSpace(mediaRoot))
+        {
+            throw new InvalidOperationException("Deck must define 'media_root'.");
+        }
+
+        if (Path.IsPathRooted(mediaRoot))
+        {
+            throw new InvalidOperationException("Deck 'media_root' must be a relative path.");
+        }
+
+        var resolvedMediaRoot = Path.GetFullPath(mediaRoot, inputDirectory);
+        if (hasMediaEntries && !Directory.Exists(resolvedMediaRoot))
+        {
+            throw new DirectoryNotFoundException($"Media root '{mediaRoot}' was not found.");
+        }
+
         var mediaByTargetName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var template in deckDefinition.Templates)
         {
             foreach (var mediaFile in template.MediaFiles)
             {
-                var resolvedSourcePath = Path.GetFullPath(mediaFile.Source, inputDirectory);
+                if (Path.IsPathRooted(mediaFile.Source))
+                {
+                    throw new InvalidOperationException(
+                        $"Media file '{mediaFile.Source}' referenced by template '{template.Name}' must be a relative path.");
+                }
+
+                var resolvedSourcePath = Path.GetFullPath(mediaFile.Source, resolvedMediaRoot);
+                if (!IsSubPathOf(resolvedMediaRoot, resolvedSourcePath))
+                {
+                    throw new InvalidOperationException(
+                        $"Media file '{mediaFile.Source}' referenced by template '{template.Name}' escapes media_root '{mediaRoot}'.");
+                }
+
                 if (!File.Exists(resolvedSourcePath))
                 {
                     throw new FileNotFoundException($"Media file '{mediaFile.Source}' referenced by template '{template.Name}' was not found.", resolvedSourcePath);
@@ -99,6 +130,14 @@ public class AnkiGeneratorService : IAnkiGeneratorService
                 ankiCollection.AddMediaFile(resolvedSourcePath, targetFileName);
             }
         }
+    }
+
+    private static bool IsSubPathOf(string rootPath, string candidatePath)
+    {
+        var normalizedRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath)) + Path.DirectorySeparatorChar;
+        var normalizedCandidate = Path.GetFullPath(candidatePath);
+
+        return normalizedCandidate.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
     }
 
     private HeaderHierarchy RebuildHierarchyFromTags(List<string> tags)

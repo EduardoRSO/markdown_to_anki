@@ -54,14 +54,18 @@ dotnet run <input.md> <output.apkg>
 
 Your Markdown file should follow this structure:
 
-~~~markdown
+````markdown
 ---
 deck_name: "My Deck"
 source: "My Study Material"
 separator: "---"
+media_root: "./media" # required: relative path from markdown file directory
 templates:
   - name: "Conceito"
     anki_model_type: "standard" # required: standard | cloze
+    media_files:
+      - source: "banana.svg" # resolved from media_root
+        name: "banana.svg"   # optional target name in .apkg
     fields: [Pergunta, Resposta, Contexto]
     html_question_format: "<div class='question'>{{Pergunta}}</div>"
     html_answer_format: "<div class='answer'>{{Resposta}}</div>"
@@ -81,13 +85,13 @@ A ratio is the relationship between two quantities.
 Example: 3:5 or 3/5
 ```
 
-~~~
+````
 
 ### Flashcard Syntax
 
 Flashcards are defined in code blocks with the template name:
 
-~~~markdown
+````markdown
 ```[TemplateName]
 Field 1
 ---
@@ -96,9 +100,16 @@ Field 2
 Field 3
 ```
 
-~~~
+````
 
 The `---` separator divides card fields. The number of fields should match the template definition.
+
+### Media Files
+
+- `media_root` is required in YAML and must be a **relative** path (example: `./media`)
+- Every template must explicitly define `media_files` (use `media_files: []` when no assets are needed)
+- `media_files[].source` is resolved relative to `media_root`
+- Absolute media paths are rejected
 
 ### Automatic Tags
 
@@ -108,7 +119,8 @@ Tags are automatically generated from the heading hierarchy and normalized:
 - **Hierarchy**: Only includes headers in the path to the card
 
 Example:
-~~~markdown
+
+````markdown
 # Matemática e Raciocínio Lógico
 ## Razão e proporção
 
@@ -116,14 +128,13 @@ Example:
 ...
 ```
 
-~~~
+````
 
 This card receives tags: `matematica_e_raciocinio_logico`, `razao_e_proporcao`
 
 ## Project Structure
 
-```
-
+```text
 MarkdownToAnki/
 ├── MarkdownToAnki.ConsoleApp/           # CLI entry point
 ├── MarkdownToAnki.Domain/               # Domain models
@@ -153,6 +164,7 @@ MarkdownToAnki/
 The refactored architecture uses **dependency injection** and separates concerns into focused services:
 
 ### Markdown Parsing Layer
+
 - **DeckConfigParser**: Extracts deck metadata and templates from YAML
 - **MarkdownHeaderHierarchyExtractor**: Parses header hierarchy (H1-H6)
 - **FlashCardContentExtractor**: Identifies code blocks and extracts field content
@@ -160,13 +172,16 @@ The refactored architecture uses **dependency injection** and separates concerns
 - **MarkdownParserService**: Facade orchestrating the above services
 
 ### Anki Generation Layer
+
 - **AnkiNoteTypeFactory**: Converts domain templates to AnkiNet structures
 - **DeckHierarchyBuilder**: Creates nested deck structure from header hierarchy
 - **AnkiCardGenerator**: Creates notes with metadata in correct nested deck
 - **AnkiGeneratorService**: Main orchestrator for Anki deck generation
 
 ### Nested Deck Hierarchy
+
 Cards are organized in nested decks matching document structure:
+
 - Each header level creates a subdeck (H1::H2::H3)
 - Cards placed in deepest nested deck of their header chain
 - Example: `# Math > ## Ratios > ### Properties` → `DeckName::Math::Ratios::Properties`

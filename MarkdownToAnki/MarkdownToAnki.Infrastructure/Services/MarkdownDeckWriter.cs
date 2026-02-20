@@ -29,12 +29,29 @@ public class MarkdownDeckWriter : IMarkdownDeckWriter
         builder.AppendLine($"deck_name: {ToYamlScalar(deckDefinition.DeckName)}");
         builder.AppendLine($"source: {ToYamlScalar(deckDefinition.Source)}");
         builder.AppendLine($"separator: {ToYamlScalar(separator)}");
+        builder.AppendLine($"media_root: {ToYamlScalar(string.IsNullOrWhiteSpace(deckDefinition.MediaRoot) ? "./media" : deckDefinition.MediaRoot)}");
         builder.AppendLine("templates:");
 
         foreach (var template in deckDefinition.Templates)
         {
             builder.AppendLine($"  - name: {ToYamlScalar(template.Name)}");
             builder.AppendLine($"    anki_model_type: {ToYamlScalar(template.ModelType == TemplateModelType.Cloze ? "cloze" : "standard")}");
+            if (template.MediaFiles.Count == 0)
+            {
+                builder.AppendLine("    media_files: []");
+            }
+            else
+            {
+                builder.AppendLine("    media_files:");
+                foreach (var mediaFile in template.MediaFiles)
+                {
+                    builder.AppendLine($"      - source: {ToYamlScalar(mediaFile.Source)}");
+                    if (!string.IsNullOrWhiteSpace(mediaFile.Name))
+                    {
+                        builder.AppendLine($"        name: {ToYamlScalar(mediaFile.Name)}");
+                    }
+                }
+            }
             builder.AppendLine($"    fields: [{string.Join(", ", template.Fields.Select(ToYamlScalar))}]");
             builder.AppendLine($"    usage: {ToYamlScalar(template.Usage)}");
             WriteYamlScalar(builder, "html_question_format", template.HtmlQuestionFormat, 4);

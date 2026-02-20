@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MarkdownToAnki.Infrastructure.Services;
+using AnkiNet;
 
 namespace MarkdownToAnki.Tests.Import;
 
@@ -8,13 +9,22 @@ public class ApkgToMarkdownServiceTests
     [Fact]
     public async Task GenerateMarkdownAsync_WithApkgInput_WritesMarkdownWithYamlHeader()
     {
-        var inputPath = GetTestDataPath("teoria.apkg");
+        var inputMdPath = GetTestDataPath("simple_deck.md");
+        var inputPath = Path.Combine(Path.GetTempPath(), $"teoria_{Guid.NewGuid()}.apkg");
         var outputPath = Path.Combine(Path.GetTempPath(), $"teoria_{Guid.NewGuid()}.md");
+
+        var parser = new MarkdownParserService(
+            new DeckConfigParser(),
+            new MarkdownHeaderHierarchyExtractor(),
+            new FlashCardContentExtractor(),
+            new TagNormalizer());
+        var generator = (IAnkiGeneratorService)new AnkiGeneratorService(new AnkiNoteTypeFactory(), new AnkiCardGenerator());
 
         var service = new ApkgToMarkdownService(new AnkiPackageReader(), new MarkdownDeckWriter());
 
         try
         {
+            await generator.GenerateApkg(parser, inputMdPath, inputPath);
             await service.GenerateMarkdownAsync(inputPath, outputPath);
 
             File.Exists(outputPath).Should().BeTrue();
@@ -26,6 +36,10 @@ public class ApkgToMarkdownServiceTests
         }
         finally
         {
+            if (File.Exists(inputPath))
+            {
+                File.Delete(inputPath);
+            }
             if (File.Exists(outputPath))
             {
                 File.Delete(outputPath);
