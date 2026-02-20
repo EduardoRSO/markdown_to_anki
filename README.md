@@ -54,7 +54,7 @@ dotnet run <input.md> <output.apkg>
 
 Your Markdown file should follow this structure:
 
-```markdown
+~~~markdown
 ---
 deck_name: "My Deck"
 source: "My Study Material"
@@ -81,13 +81,13 @@ A ratio is the relationship between two quantities.
 Example: 3:5 or 3/5
 ```
 
-```
+~~~
 
 ### Flashcard Syntax
 
 Flashcards are defined in code blocks with the template name:
 
-```markdown
+~~~markdown
 ```[TemplateName]
 Field 1
 ---
@@ -96,7 +96,7 @@ Field 2
 Field 3
 ```
 
-```
+~~~
 
 The `---` separator divides card fields. The number of fields should match the template definition.
 
@@ -108,7 +108,7 @@ Tags are automatically generated from the heading hierarchy and normalized:
 - **Hierarchy**: Only includes headers in the path to the card
 
 Example:
-```markdown
+~~~markdown
 # Matemática e Raciocínio Lógico
 ## Razão e proporção
 
@@ -116,7 +116,7 @@ Example:
 ...
 ```
 
-```
+~~~
 
 This card receives tags: `matematica_e_raciocinio_logico`, `razao_e_proporcao`
 
@@ -182,7 +182,7 @@ See `ANKI_NET_SETUP.md` for source-reference workflow and optional local NuGet p
 
 ## Example
 
-See `teoria.md` in the root directory for a complete example with multiple templates and hierarchies.
+See `MarkdownToAnki/Tests/TestData/simple_deck.md` for a complete working example.
 
 ## License
 
